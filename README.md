@@ -1,6 +1,6 @@
 # 🧠 SmartNotes
 
-![SmartNotes Banner](https://via.placeholder.com/1200x400/071026/7dd3fc?text=SmartNotes+AI+Assistant)
+
 
 > **Your Intelligent Academic Assistant.**  
 > Summarize notes, generate quizzes, and master complex topics with the power of AI.
@@ -46,19 +46,7 @@ Whether you're drowning in research papers or need a quick revision tool, SmartN
 
 ---
 
-## 📸 Screenshots
 
-|                                      **Dashboard**                                       |                                   **Summarizer**                                    |
-| :--------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------: |
-| ![Dashboard](https://via.placeholder.com/600x350/0c162d/a78bfa?text=Analytics+Dashboard) | ![Summarizer](https://via.placeholder.com/600x350/0c162d/34d399?text=AI+Summarizer) |
-|                        _Track your progress and saved summaries_                         |                     _Upload documents and get instant insights_                     |
-
-|                            **Interactive Quiz**                            |                                   **AI Chatbot**                                   |
-| :------------------------------------------------------------------------: | :--------------------------------------------------------------------------------: |
-| ![Quiz](https://via.placeholder.com/600x350/0c162d/fbbf24?text=Smart+Quiz) | ![Chatbot](https://via.placeholder.com/600x350/0c162d/7dd3fc?text=Study+Assistant) |
-|               _Test your knowledge with generated questions_               |                   _Ask questions and get detailed explanations_                    |
-
----
 
 ## 🛠️ Tech Stack
 
