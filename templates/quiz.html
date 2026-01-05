@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="quiz">
+    <div class="container">
+        <h1 class="page-title">AI Generated Quiz</h1>
+        <p class="page-subtitle">Test your knowledge with AI-powered questions generated from your summaries</p>
+
+        <!-- Quiz Actions -->
+        <div class="quiz-actions">
+            <button class="btn btn-primary generate-quiz-btn" onclick="generateNewQuiz()">
+                <i class="fas fa-brain"></i> Generate Quiz
+            </button>
+            <button class="btn btn-outline toggle-answer-btn" onclick="toggleAllAnswers()">
+                <i class="fas fa-eye"></i> Toggle Answers
+            </button>
+            <button class="btn btn-secondary reset-quiz-btn" onclick="resetQuiz()">
+                <i class="fas fa-redo"></i> Reset
+            </button>
+        </div>
+
+        <!-- Quiz Stats -->
+        <div id="quizStats" class="quiz-stats" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3 id="totalQuestions">0</h3>
+                    <p>Total Questions</p>
+                </div>
+                <div class="stat-item">
+                    <h3 id="correctAnswers">0</h3>
+                    <p>Correct Answers</p>
+                </div>
+                <div class="stat-item">
+                    <h3 id="scorePercentage">0%</h3>
+                    <p>Score</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quizContainer" class="quiz-container"></div>
+
+        <!-- Empty Quiz State -->
+        <div id="emptyQuiz" class="empty-quiz-state">
+            <i class="fas fa-brain" style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;"></i>
+            <h3>Ready to test your knowledge?</h3>
+            <p>Click "Generate Quiz" to create AI-powered questions from your summaries!</p>
+            <div class="quiz-tips">
+                <h4><i class="fas fa-lightbulb"></i> Tips:</h4>
+                <ul>
+                    <li>First summarize a document in the Summarizer page</li>
+                    <li>Click Generate Quiz to start</li>
+                    <li>Use Toggle Answers to review your answers</li>
+                    <li>Reset anytime to start over</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Loading State -->
+<div id="loadingSpinner" class="loading-spinner" style="display: none;">
+    <div class="spinner"></div>
+    <p>Generating quiz questions...</p>
+</div>
+
+<script>
+// Ensure a safe quiz state exists to avoid runtime errors when user hasn't generated a quiz
+let currentQuiz = window.currentQuiz || { questions: [], answeredQuestions: 0, score: 0 };
+// Keep a reference on window so other scripts (if any) can inspect it
+window.currentQuiz = currentQuiz;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize quiz container
+    const quizContainer = document.getElementById('quizContainer');
+    const emptyQuiz = document.getElementById('emptyQuiz');
+    const quizStats = document.getElementById('quizStats');
+    
+    // Hide stats initially
+    if (quizStats) quizStats.style.display = 'none';
+    // show empty state
+    if (emptyQuiz) emptyQuiz.style.display = 'block';
+    if (quizContainer) quizContainer.innerHTML = '';
+});
+
+// Initialize or reset quiz UI and state
+function initializeQuiz() {
+    currentQuiz = { questions: [], answeredQuestions: 0, score: 0 };
+    window.currentQuiz = currentQuiz;
+
+    const quizContainer = document.getElementById('quizContainer');
+    const emptyQuiz = document.getElementById('emptyQuiz');
+    const quizStats = document.getElementById('quizStats');
+    const toggleBtn = document.querySelector('.toggle-answer-btn');
+    const resetBtn = document.querySelector('.reset-quiz-btn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+
+    if (quizContainer) quizContainer.innerHTML = '';
+    if (emptyQuiz) emptyQuiz.style.display = 'block';
+    if (quizStats) quizStats.style.display = 'none';
+    if (toggleBtn) toggleBtn.style.display = 'none';
+    if (resetBtn) resetBtn.style.display = 'none';
+    if (loadingSpinner) loadingSpinner.style.display = 'none';
+}
+
+// Handle quiz generation
+function generateNewQuiz() {
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const emptyQuiz = document.getElementById('emptyQuiz');
+    const quizContainer = document.getElementById('quizContainer');
+    const quizStats = document.getElementById('quizStats');
+
+    // Show loading state (guard existence)
+    if (loadingSpinner) loadingSpinner.style.display = 'flex';
+    if (emptyQuiz) emptyQuiz.style.display = 'none';
+    if (quizContainer) quizContainer.style.display = 'none';
+    if (quizStats) quizStats.style.display = 'none';
+
+    // Make API call to generate quiz. Send an empty JSON body so Flask has a JSON payload if it expects one.
+    fetch('/generate-quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    })
+    .then(async response => {
+        // If server returned an error status, try to parse message and show it
+        let payload = null;
+        try {
+            payload = await response.json();
+        } catch (e) {
+            payload = null;
+        }
+
+        if (!response.ok) {
+            const msg = (payload && payload.error) ? payload.error : 'Failed to generate quiz. Please try again.';
+            throw new Error(msg);
+        }
+
+        // normalize questions array coming from server
+        const questions = (payload && (payload.questions || payload.quiz)) ? (payload.questions || payload.quiz) : (Array.isArray(payload) ? payload : []);
+        return { questions };
+    })
+    .then(result => {
+        const questions = result.questions || [];
+        if (questions.length > 0) {
+            // store on global state
+            currentQuiz.questions = questions;
+            currentQuiz.answeredQuestions = 0;
+            currentQuiz.score = 0;
+            displayQuiz({ questions });
+            if (quizStats) quizStats.style.display = 'block';
+        } else {
+            showError('Please generate a summary first before creating a quiz.');
+            if (emptyQuiz) emptyQuiz.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        // show server-sent message or generic
+        showError(error.message || 'Failed to generate quiz. Please try again.');
+        if (emptyQuiz) emptyQuiz.style.display = 'block';
+    })
+    .finally(() => {
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+    });
+}
+
+// Display quiz questions
+function displayQuiz(data) {
+    const quizContainer = document.getElementById('quizContainer');
+    const emptyQuiz = document.getElementById('emptyQuiz');
+    // Prefer single-question flow: store questions and show first question
+    if (!data || !Array.isArray(data.questions)) return;
+
+    currentQuiz.questions = data.questions;
+    currentQuiz.answeredQuestions = 0;
+    currentQuiz.score = 0;
+
+    if (quizContainer) quizContainer.innerHTML = '';
+    if (quizContainer) quizContainer.style.display = 'block';
+    if (emptyQuiz) emptyQuiz.style.display = 'none';
+
+    // Show first question
+    showQuestion(0);
+    updateQuizStats();
+}
+
+// Show a single question by index (single-question view)
+function showQuestion(index) {
+    const quizContainer = document.getElementById('quizContainer');
+    if (!quizContainer) return;
+    const question = currentQuiz.questions[index];
+    if (!question) return;
+
+    const questionElement = createQuestionElement(question, index);
+    quizContainer.innerHTML = '';
+    quizContainer.appendChild(questionElement);
+    quizContainer.style.display = 'block';
+
+    updateProgress(index);
+}
+
+// Create question element
+function createQuestionElement(question, index) {
+    const div = document.createElement('div');
+    div.className = 'quiz-question';
+    div.innerHTML = `
+        <div class="question-header">
+            <span class="question-badge">Q${index + 1}</span>
+            <p class="question-text">${question.question}</p>
+        </div>
+        <div class="quiz-options">
+            ${question.options.map((option, i) => `
+                <div class="quiz-option" onclick="selectAnswer(this, ${index}, ${i})">
+                    <span class="option-letter">${String.fromCharCode(65 + i)}</span>
+                    <span class="option-text">${option}</span>
+                </div>
+            `).join('')}
+        </div>
+        <div class="quiz-explanation" style="display: none;">
+            <div class="explanation-header">
+                <i class="fas fa-info-circle"></i> Explanation
+            </div>
+            <div class="explanation-content">
+                <p>${question.explanation || 'No explanation available.'}</p>
+            </div>
+        </div>
+    `;
+    return div;
+}
+
+function selectAnswer(element, questionIndex, optionIndex) {
+    if (currentQuiz.questions[questionIndex].answered) return;
+
+    const options = element.parentElement.getElementsByClassName('quiz-option');
+    const question = currentQuiz.questions[questionIndex];
+    
+    // Mark question as answered
+    question.answered = true;
+    currentQuiz.answeredQuestions++;
+    
+    // Show correct/incorrect
+    Array.from(options).forEach((option, index) => {
+        option.disabled = true;
+        if (index === question.correctAnswer) {
+            option.classList.add('correct');
+        } else if (index === optionIndex) {
+            option.classList.add(index === question.correctAnswer ? 'correct' : 'incorrect');
+        }
+    });
+
+    // Update score
+    if (optionIndex === question.correctAnswer) {
+        currentQuiz.score++;
+    }
+
+    // Show explanation
+    const explanation = element.parentElement.nextElementSibling;
+    explanation.style.display = 'block';
+
+    // Update stats
+    updateQuizStats();
+
+    // Move to next question after delay
+    setTimeout(() => {
+        if (questionIndex < currentQuiz.questions.length - 1) {
+            showQuestion(questionIndex + 1);
+        } else {
+            showQuizComplete();
+        }
+    }, 2000);
+}
+
+function updateQuizStats() {
+    const total = currentQuiz.questions.length;
+    const answered = currentQuiz.answeredQuestions;
+    const correct = currentQuiz.score;
+    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+    // The template uses `totalQuestions`, `correctAnswers`, and `scorePercentage` ids.
+    const totalEl = document.getElementById('totalQuestions');
+    const correctEl = document.getElementById('correctAnswers');
+    const scoreEl = document.getElementById('scorePercentage');
+
+    if (totalEl) totalEl.textContent = total;
+    if (correctEl) correctEl.textContent = correct;
+    if (scoreEl) scoreEl.textContent = `${percentage}%`;
+}
+
+function updateProgress(currentIndex) {
+    const total = currentQuiz.questions.length;
+    const progress = document.getElementById('quizProgress');
+    const current = document.getElementById('currentQuestion');
+    const totalElement = document.getElementById('totalQuestions');
+    const progressFill = document.querySelector('.progress-fill');
+
+    if (!progress || !current || !totalElement || !progressFill) return;
+
+    progress.style.display = 'block';
+    current.textContent = currentIndex + 1;
+    totalElement.textContent = total;
+    progressFill.style.width = `${((currentIndex + 1) / Math.max(total,1)) * 100}%`;
+}
+
+function showQuizComplete() {
+    const quizContainer = document.getElementById('quizContainer');
+    const quizComplete = document.getElementById('quizComplete');
+    const finalScore = document.getElementById('finalScore');
+    const scoreMessage = document.getElementById('scoreMessage');
+    
+    if (!quizComplete || !finalScore || !scoreMessage) {
+        // fallback: update available stats
+        updateQuizStats();
+        return;
+    }
+
+    const percentage = Math.round((currentQuiz.questions.length > 0) ? (currentQuiz.score / currentQuiz.questions.length) * 100 : 0);
+    finalScore.textContent = `${percentage}%`;
+    
+    // Generate score message
+    let message = '';
+    if (percentage >= 90) {
+        message = 'Outstanding! You\'ve mastered this content!';
+    } else if (percentage >= 70) {
+        message = 'Great job! You have a good understanding of the material.';
+    } else if (percentage >= 50) {
+        message = 'Good effort! Review the topics you missed to improve.';
+    } else {
+        message = 'Keep practicing! Review the material and try again.';
+    }
+    
+    scoreMessage.textContent = message;
+    
+    quizContainer.style.display = 'none';
+    quizComplete.style.display = 'block';
+}
+
+function reviewAnswers() {
+    const quizContainer = document.getElementById('quizContainer');
+    const quizComplete = document.getElementById('quizComplete');
+    
+    quizComplete.style.display = 'none';
+    showQuestion(0);
+}
+
+function toggleAllAnswers() {
+    const questions = document.getElementsByClassName('quiz-question');
+    Array.from(questions).forEach(question => {
+        const explanation = question.querySelector('.quiz-explanation');
+        const options = question.getElementsByClassName('quiz-option');
+        const currentQuestion = currentQuiz.questions[Array.from(questions).indexOf(question)];
+        
+        Array.from(options).forEach((option, index) => {
+            if (index === currentQuestion.correctAnswer) {
+                option.classList.add('correct');
+            }
+        });
+        
+        if (explanation) {
+            explanation.style.display = explanation.style.display === 'none' ? 'block' : 'none';
+        }
+    });
+}
+
+function resetQuiz() {
+    initializeQuiz();
+}
+
+function showQuizControls() {
+    const toggle = document.querySelector('.toggle-answer-btn');
+    const reset = document.querySelector('.reset-quiz-btn');
+    const stats = document.getElementById('quizStats');
+    const progress = document.getElementById('quizProgress');
+
+    if (toggle) toggle.style.display = 'inline-flex';
+    if (reset) reset.style.display = 'inline-flex';
+    if (stats) stats.style.display = 'block';
+    if (progress) progress.style.display = 'block';
+}
+
+function showError(message) {
+    const flash = document.createElement('div');
+    flash.className = 'flash-message error animated fadeIn';
+    flash.textContent = message;
+    
+    const container = document.querySelector('.flash-messages');
+    if (container) {
+        container.appendChild(flash);
+        setTimeout(() => {
+            flash.classList.add('fadeOut');
+            setTimeout(() => flash.remove(), 300);
+        }, 5000);
+    }
+}
+</script>
+{% endblock %}
+

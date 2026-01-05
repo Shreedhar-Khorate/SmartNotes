@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="summarizer">
+    <div class="container">
+        <h1 class="page-title">AI Notes Summarizer</h1>
+        <p class="page-subtitle">Upload your documents and get instant AI-powered summaries</p>
+
+        <!-- Upload Form -->
+        <div class="upload-card">
+            <form id="uploadForm" method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data" onsubmit="return handleSubmit(event)">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-progress" style="display: none;">
+                        <div class="progress-bar"></div>
+                        <p class="progress-text">Uploading... <span class="progress-percent">0%</span></p>
+                    </div>
+                    <h3>Drop your file here or click to browse</h3>
+                    <p>Supports PDF, DOCX, TXT files (max 10MB)</p>
+                    <p class="file-name" id="fileName">No file selected</p>
+                    <input type="file" id="fileInput" name="file" class="file-input" accept=".pdf,.docx,.txt" required>
+                    <div class="upload-actions">
+                        <button type="button" class="btn btn-outline" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-folder-open"></i> Choose File
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-magic"></i> Upload & Summarize
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Summary Display -->
+        {% if summary %}
+        <div class="summary-section">
+            <div class="summary-header">
+                <h2>AI Generated Summary</h2>
+                <div class="summary-actions">
+                    <button class="btn btn-outline generate-quiz-btn" onclick="generateNewQuiz()">
+                        <i class="fas fa-brain"></i> Generate Quiz
+                    </button>
+                    <button class="btn btn-outline speak-btn" onclick="speakSummary()">
+                        <i class="fas fa-volume-up"></i> Listen
+                    </button>
+                    <button class="btn btn-outline stop-btn" onclick="stopSpeaking()" style="display: none;">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                    <button class="btn btn-outline copy-btn" onclick="copySummary()">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button class="btn btn-primary save-btn" onclick="saveSummary()">
+                        <i class="fas fa-save"></i> Save Summary
+                    </button>
+                </div>
+            </div>
+            <div class="summary-content">
+                <pre>{{ summary }}</pre>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quiz Section -->
+        <div id="quizSection" class="quiz-section" style="display: none;">
+            <div class="quiz-header">
+                <h2>Generated Quiz</h2>
+                <div class="quiz-actions">
+                    <button class="btn btn-outline" onclick="toggleAllAnswers()">
+                        <i class="fas fa-eye"></i> Toggle All Answers
+                    </button>
+                    <button class="btn btn-primary" onclick="generateNewQuiz()">
+                        <i class="fas fa-sync"></i> New Quiz
+                    </button>
+                </div>
+            </div>
+            <div class="quiz-stats">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <h3 id="totalQuestions">0</h3>
+                        <p>Total Questions</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3 id="correctAnswers">0</h3>
+                        <p>Correct Answers</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3 id="scorePercentage">0%</h3>
+                        <p>Score</p>
+                    </div>
+                </div>
+            </div>
+            <div id="quizContainer" class="quiz-container"></div>
+            
+            <!-- Quiz Completion -->
+            <div id="quizCompletion" class="quiz-completion" style="display: none;">
+                <div class="completion-card">
+                    <div class="completion-icon">🎉</div>
+                    <h2>Quiz Completed!</h2>
+                    <div class="score-display">
+                        You scored <span id="finalScore">0</span> out of <span id="totalScore">0</span>
+                    </div>
+                    <p id="scoreMessage" class="score-message"></p>
+                    <div class="completion-actions">
+                        <button class="btn btn-primary" onclick="generateNewQuiz()">
+                            <i class="fas fa-redo"></i> Try Another Quiz
+                        </button>
+                        <button class="btn btn-outline" onclick="resetQuiz()">
+                            <i class="fas fa-eye"></i> Review Answers
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Loading Spinner -->
+<div id="loadingSpinner" class="loading-spinner" style="display: none;">
+    <div class="spinner"></div>
+    <p>AI is working its magic...</p>
+</div>
+{% endblock %}

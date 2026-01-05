@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-container">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        Study <span class="gradient-text">Smarter</span> with <span class="gradient-text">AI</span>
+      </h1>
+      <p class="hero-description">
+        Transform long notes and PDFs into concise AI-powered summaries and interactive quizzes.
+        Learn faster, remember more — effortlessly.
+      </p>
+      <div class="hero-buttons">
+        <a href="{{ url_for('summarizer') }}" class="btn btn-primary">
+          <i class="fas fa-upload"></i> Upload Notes
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+          <i class="fas fa-chart-bar"></i> View Dashboard
+        </a>
+      </div>
+    </div>
+    <div class="hero-image">
+      <img
+        src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+        alt="AI Notes Summarizer"
+      />
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+  <div class="container">
+    <h2 class="section-title">Why Choose StudyWise?</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-brain"></i></div>
+        <h3>AI Summarization</h3>
+        <p>Instantly condense lengthy notes into focused summaries that save your time.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-question-circle"></i></div>
+        <h3>Quiz Generation</h3>
+        <p>Test your knowledge with AI-generated quizzes based on your own content.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-volume-up"></i></div>
+        <h3>Voice Assistance</h3>
+        <p>Navigate and interact with StudyWise using voice commands for a hands-free experience.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+        <h3>Performance Insights</h3>
+        <p>Track your progress, measure time saved, and visualize your learning stats.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<script>
+  const urls = {
+    home: "{{ url_for('index') }}",
+    summarizer: "{{ url_for('summarizer') }}",
+    dashboard: "{{ url_for('dashboard') }}",
+    chatbot: "{{ url_for('chatbot_page') }}"
+  };
+</script>
+
+<script src="{{ url_for('static', filename='js/voice_navigation.js') }}"></script>
+
+<!-- 💬 Chatbot Floating Button -->
+<button class="chatbot-button" onclick="window.location.href=urls.chatbot" title="Ask StudyWise Bot">
+  <img
+    src="https://media4.giphy.com/media/S60CrN9iMxFlyp7uM8/200w.gif?cid=6c09b95225t6fhgktawwu14fdkki3tnuu5mt6ob8fjrmk69e&ep=v1_gifs_search&rid=200w.gif&ct=g"
+    alt="Chatbot"
+  />
+</button>
+
+<style>
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 50px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white;
+}
+.hero-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+}
+.hero-content {
+  flex: 1;
+}
+.hero-image img {
+  width: 450px;
+  border-radius: 20px;
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+}
+.gradient-text {
+  background: linear-gradient(90deg, #00ffff, #00bfff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  margin-right: 15px;
+  text-decoration: none;
+}
+.btn-primary {
+  background: #00bfff;
+  color: #0f172a;
+  font-weight: bold;
+}
+.btn-outline {
+  border: 2px solid #00bfff;
+  color: #00bfff;
+}
+.features {
+  padding: 80px 20px;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 20px;
+}
+.feature-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 25px;
+  border-radius: 15px;
+  transition: transform 0.3s;
+}
+.feature-card:hover {
+  transform: translateY(-8px);
+}
+.feature-icon {
+  font-size: 2rem;
+  color: #00ffff;
+  margin-bottom: 10px;
+}
+
+/* Floating buttons */
+.mic-btn {
+  position: fixed;
+  bottom: 100px;
+  right: 35px;
+  background: #00bfff;
+  color: #0f172a;
+  border: none;
+  padding: 14px 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+.mic-btn:hover {
+  background: #00ffff;
+  transform: scale(1.1);
+}
+.chatbot-button {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  z-index: 999;
+  transition: transform 0.3s ease;
+}
+.chatbot-button:hover {
+  transform: scale(1.1);
+}
+.chatbot-button img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+}
+</style>
+{% endblock %}
+
