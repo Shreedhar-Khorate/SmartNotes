@@ -11,5 +11,5 @@ lxml>=4.6.0
 numpy>=1.19.0
 pandas>=1.1.0
 scikit-learn>=0.24.0
-pickle5>=0.0.11
-random2>=1.0.1
+pickle>=0.7.5
+random>=1.0.1
